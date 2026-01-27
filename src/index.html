@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Timer</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0ea5e9">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: linear-gradient(to bottom, #1e3a8a, #0ea5e9); min-height: 100vh; }
+    </style>
+</head>
+<body class="font-sans text-white p-4 max-w-md mx-auto">
+
+<div class="bg-white/10 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/20">
+    <h1 class="text-2xl font-bold text-center mb-5 text-yellow-300">Shift Timer</h1>
+
+    <!-- Login -->
+    <div class="mb-4">
+        <label class="block text-sm mb-1">Login Time</label>
+        <input type="time" id="loginTime" value="22:42" class="w-full p-3 rounded-xl bg-white/20 border border-white/30 focus:ring-2 focus:ring-yellow-400">
+    </div>
+
+    <!-- Shift -->
+    <div class="mb-4">
+        <label class="block text-sm mb-1">Shift Hours</label>
+        <input type="number" id="shiftHours" value="7" min="1" max="12" class="w-full p-3 rounded-xl bg-white/20 border border-white/30">
+    </div>
+
+    <!-- Breaks -->
+    <div class="mb-4" id="breaks">
+        <label class="block text-sm mb-2">Breaks (minutes)</label>
+        <div class="flex gap-2 mb-2">
+            <input type="number" class="breakInput flex-1 p-3 rounded-xl bg-white/20 border border-white/30" placeholder="Break 1">
+            <button onclick="removeBreak(this)" class="px-4 bg-red-500 rounded-xl">−</button>
+        </div>
+    </div>
+
+    <button onclick="addBreak()" class="w-full mb-4 bg-green-500 py-3 rounded-xl font-bold">+ Add Break</button>
+
+    <button onclick="updateDisplay()" class="w-full bg-yellow-400 text-black py-4 rounded-xl font-bold mb-5">Calculate</button>
+
+    <!-- Result -->
+    <div id="display" class="text-center"></div>
+    <div id="timeLeft" class="mt-4 p-4 bg-emerald-500/80 rounded-xl text-center font-bold"></div>
+</div>
+
+<script>
+    function addBreak() {
+        const breaksDiv = document.getElementById('breaks');
+        const newBreak = document.createElement('div');
+        newBreak.className = 'flex gap-2 mb-2';
+        newBreak.innerHTML = `
+            <input type="number" class="breakInput flex-1 p-3 rounded-xl bg-white/20 border border-white/30" placeholder="Break ${document.querySelectorAll('.breakInput').length + 1}">
+            <button onclick="removeBreak(this)" class="px-4 bg-red-500 rounded-xl">−</button>
+        `;
+        breaksDiv.appendChild(newBreak);
+    }
+
+    function removeBreak(button) {
+        button.parentElement.remove();
+    }
+
+    function updateDisplay() {
+        const loginTime = document.getElementById('loginTime').value;
+        const shiftHours = parseInt(document.getElementById('shiftHours').value);
+        const breaks = Array.from(document.querySelectorAll('.breakInput')).map(input => parseInt(input.value) || 0);
+        const totalBreakMinutes = breaks.reduce((a, b) => a + b, 0);
+
+        const [hours, minutes] = loginTime.split(':').map(Number);
+        let endMinutes = minutes + (shiftHours * 60) - totalBreakMinutes;
+        let endHours = hours + Math.floor(endMinutes / 60);
+        endMinutes = endMinutes % 60;
+        endHours = endHours % 24;
+
+        const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+        document.getElementById('display').textContent = `Logout Time: ${endTimeStr}`;
+
+        const now = new Date();
+        const endDate = new Date(now);
+        endDate.setHours(endHours, endMinutes, 0);
+        if (endDate < now) endDate.setDate(endDate.getDate() + 1);
+
+        const diff = endDate - now;
+        const diffHours = Math.floor(diff / 3600000);
+        const diffMinutes = Math.floor((diff % 3600000) / 60000);
+        document.getElementById('timeLeft').textContent = `Time Left: ${diffHours}h ${diffMinutes}m`;
+    }
+</script>
+</body>
+</html>
