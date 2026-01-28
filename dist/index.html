@@ -50,46 +50,63 @@
 </div>
 
 <script>
-    function addBreak() {
-        const breaksDiv = document.getElementById('breaks');
-        const newBreak = document.createElement('div');
-        newBreak.className = 'flex gap-2 mb-2';
-        newBreak.innerHTML = `
-            <input type="number" class="breakInput flex-1 p-3 rounded-xl bg-white/20 border border-white/30" placeholder="Break ${document.querySelectorAll('.breakInput').length + 1}">
-            <button onclick="removeBreak(this)" class="px-4 bg-red-500 rounded-xl">−</button>
-        `;
-        breaksDiv.appendChild(newBreak);
-    }
+let breakCount = 1;
 
-    function removeBreak(button) {
-        button.parentElement.remove();
-    }
+function addBreak() {
+    breakCount++;
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 mb-2';
+    div.innerHTML = `
+        <input type="number" class="breakInput flex-1 p-3 rounded-xl bg-white/20 border border-white/30" placeholder="Break ${breakCount}">
+        <button onclick="removeBreak(this)" class="px-4 bg-red-500 rounded-xl">−</button>
+    `;
+    document.getElementById('breaks').appendChild(div);
+}
 
-    function updateDisplay() {
-        const loginTime = document.getElementById('loginTime').value;
-        const shiftHours = parseInt(document.getElementById('shiftHours').value);
-        const breaks = Array.from(document.querySelectorAll('.breakInput')).map(input => parseInt(input.value) || 0);
-        const totalBreakMinutes = breaks.reduce((a, b) => a + b, 0);
+function removeBreak(btn) {
+    btn.parentElement.remove();
+    updateDisplay();
+}
 
-        const [hours, minutes] = loginTime.split(':').map(Number);
-        let endMinutes = minutes + (shiftHours * 60) - totalBreakMinutes;
-        let endHours = hours + Math.floor(endMinutes / 60);
-        endMinutes = endMinutes % 60;
-        endHours = endHours % 24;
+function parseTime(t) {
+    const [h,m] = t.split(':').map(Number);
+    return h*60 + m;
+}
 
-        const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
-        document.getElementById('display').textContent = `Logout Time: ${endTimeStr}`;
+function formatTime(mins) {
+    const h = Math.floor(mins/60)%24;
+    const m = mins%60;
+    const p = h>=12?'PM':'AM';
+    const dh = h%12 || 12;
+    return `${dh}:${m.toString().padStart(2,'0')} ${p}`;
+}
 
-        const now = new Date();
-        const endDate = new Date(now);
-        endDate.setHours(endHours, endMinutes, 0);
-        if (endDate < now) endDate.setDate(endDate.getDate() + 1);
+function updateDisplay() {
+    const login = parseTime(loginTime.value);
+    const shift = (parseInt(shiftHours.value)||7)*60;
 
-        const diff = endDate - now;
-        const diffHours = Math.floor(diff / 3600000);
-        const diffMinutes = Math.floor((diff % 3600000) / 60000);
-        document.getElementById('timeLeft').textContent = `Time Left: ${diffHours}h ${diffMinutes}m`;
-    }
+    let breaks = 0;
+    document.querySelectorAll('.breakInput').forEach(b=>breaks+=parseInt(b.value)||0);
+
+    const logoutM = (login + shift + breaks) % 1440;
+    const logout = formatTime(logoutM);
+
+    const now = new Date();
+    const nowM = now.getHours()*60 + now.getMinutes();
+    const left = logoutM>nowM ? logoutM-nowM : 1440-nowM+logoutM;
+
+    display.innerHTML = `
+        <div class="text-4xl font-black text-yellow-300">${logout}</div>
+        <div class="text-sm text-gray-200">Logout Time</div>
+        <div class="text-sm mt-1">Total Breaks: ${breaks} min</div>
+    `;
+
+    timeLeft.innerHTML = `Time Left: ${Math.floor(left/60)}h ${left%60}m`;
+}
+
+setInterval(updateDisplay, 1000);
+updateDisplay();
 </script>
+
 </body>
 </html>
