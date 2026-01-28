@@ -1,0 +1,23 @@
+{
+  "name": "shift-timer",
+  "version": "1.0.0",
+  "description": "Shift Timer application built with Cloudflare Workers",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "echo 'Building...'",
+    "preview": "wrangler preview"
+  },
+  "keywords": [
+    "shift",
+    "timer",
+    "cloudflare",
+    "workers"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.61.0"
+  }
+}
