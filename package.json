@@ -1,8 +1,8 @@
 {
-  "name": "shift-timer",
+  "name": "loginnewcss",
   "version": "1.0.0",
   "description": "Shift Timer application built with Cloudflare Workers",
-  "main": "src/index.js",
+  "main": "src/workers.js",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
