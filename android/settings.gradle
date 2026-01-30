@@ -1,0 +1,19 @@
+// settings.gradle
+pluginManagement {
+    repositories {
+        google()        // Add this line
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()        // Add this line
+        mavenCentral()
+    }
+}
+
+rootProject.name = "LoginNewCSS"
+include ':app'

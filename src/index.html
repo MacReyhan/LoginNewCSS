@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,85 +12,232 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: linear-gradient(to bottom, #1e3a8a, #0ea5e9); min-height: 100vh; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top left, #1e3a8a, #0f172a);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-calculate {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-calculate:active {
+            transform: translateY(1px);
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-remove {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            transition: all 0.2s ease;
+        }
+
+        .btn-remove:hover {
+            filter: saturate(1.5);
+            transform: scale(1.05);
+        }
+
+        input {
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-color: #fbbf24 !important;
+            outline: none;
+        }
     </style>
 </head>
-<body class="font-sans text-white p-4 max-w-md mx-auto">
 
-<div class="bg-white/10 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/20">
-    <h1 class="text-2xl font-bold text-center mb-5 text-yellow-300">Shift Timer</h1>
+<body class="text-white p-4">
 
-    <!-- Login -->
-    <div class="mb-4">
-        <label class="block text-sm mb-1">Login Time</label>
-        <input type="time" id="loginTime" value="22:42" class="w-full p-3 rounded-xl bg-white/20 border border-white/30 focus:ring-2 focus:ring-yellow-400">
-    </div>
+    <div class="glass-card rounded-3xl p-8 max-w-sm w-full">
+        <h1
+            class="text-3xl font-bold text-center mb-2 tracking-tight bg-gradient-to-r from-yellow-200 to-yellow-500 bg-clip-text text-transparent">
+            Shift Timer
+        </h1>
+        <div id="currentTime" class="text-center text-white/40 text-sm font-medium mb-8 tabular-nums"></div>
 
-    <!-- Shift -->
-    <div class="mb-4">
-        <label class="block text-sm mb-1">Shift Hours</label>
-        <input type="number" id="shiftHours" value="7" min="1" max="12" class="w-full p-3 rounded-xl bg-white/20 border border-white/30">
-    </div>
+        <!-- Login -->
+        <div class="mb-6">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-2 ml-1">Login
+                Time</label>
+            <input type="time" id="loginTime" value="22:42"
+                class="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner">
+        </div>
 
-    <!-- Breaks -->
-    <div class="mb-4" id="breaks">
-        <label class="block text-sm mb-2">Breaks (minutes)</label>
-        <div class="flex gap-2 mb-2">
-            <input type="number" class="breakInput flex-1 p-3 rounded-xl bg-white/20 border border-white/30" placeholder="Break 1">
-            <button onclick="removeBreak(this)" class="px-4 bg-red-500 rounded-xl">−</button>
+        <!-- Shift -->
+        <div class="mb-6">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-2 ml-1">Shift
+                Hours</label>
+            <input type="number" id="shiftHours" value="7" min="1" max="12"
+                class="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner">
+        </div>
+
+        <!-- Breaks -->
+        <div class="mb-4" id="breaks">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-2 ml-1">Breaks
+                (minutes)</label>
+            <div class="flex gap-3 mb-3">
+                <input type="number"
+                    class="breakInput flex-1 p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner"
+                    placeholder="Min">
+                <button onclick="removeBreak(this)"
+                    class="btn-remove w-14 flex items-center justify-center rounded-2xl text-xl font-bold shadow-lg">−</button>
+            </div>
+        </div>
+
+        <button onclick="addBreak()"
+            class="btn-add w-full mb-6 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clip-rule="evenodd" />
+            </svg>
+            Add Break
+        </button>
+
+        <button onclick="updateDisplay()"
+            class="btn-calculate w-full text-black h-16 rounded-2xl font-extrabold text-lg uppercase tracking-wider mb-8 flex items-center justify-center">
+            Calculate
+        </button>
+
+        <!-- Result -->
+        <div id="display" class="text-xl font-bold text-center mb-4 transition-all duration-500"></div>
+        <div id="timeLeft"
+            class="p-5 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl text-center font-bold text-emerald-300 hidden">
         </div>
     </div>
 
-    <button onclick="addBreak()" class="w-full mb-4 bg-green-500 py-3 rounded-xl font-bold">+ Add Break</button>
+    <script>
+        // Update current time every second
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            const currentTimeEl = document.getElementById('currentTime');
+            if (currentTimeEl) {
+                currentTimeEl.textContent = `Current Time: ${timeStr}`;
+            }
 
-    <button onclick="updateDisplay()" class="w-full bg-yellow-400 text-black py-4 rounded-xl font-bold mb-5">Calculate</button>
+            // Auto-refresh calculation if it has been run at least once
+            const timeLeftEl = document.getElementById('timeLeft');
+            if (timeLeftEl && !timeLeftEl.classList.contains('hidden')) {
+                updateDisplay(false); // Pass false to skip animations
+            }
+        }
+        setInterval(updateClock, 1000);
 
-    <!-- Result -->
-    <div id="display" class="text-center"></div>
-    <div id="timeLeft" class="mt-4 p-4 bg-emerald-500/80 rounded-xl text-center font-bold"></div>
-</div>
+        // Run immediately on load
+        window.addEventListener('load', updateClock);
 
-<script>
-    function addBreak() {
-        const breaksDiv = document.getElementById('breaks');
-        const newBreak = document.createElement('div');
-        newBreak.className = 'flex gap-2 mb-2';
-        newBreak.innerHTML = `
-            <input type="number" class="breakInput flex-1 p-3 rounded-xl bg-white/20 border border-white/30" placeholder="Break ${document.querySelectorAll('.breakInput').length + 1}">
-            <button onclick="removeBreak(this)" class="px-4 bg-red-500 rounded-xl">−</button>
+        function addBreak() {
+            const breaksDiv = document.getElementById('breaks');
+            const newBreak = document.createElement('div');
+            newBreak.className = 'flex gap-3 mb-3';
+            newBreak.innerHTML = `
+            <input type="number" class="breakInput flex-1 p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner" placeholder="Min" oninput="updateDisplay(false)">
+            <button onclick="removeBreak(this)" class="btn-remove w-14 flex items-center justify-center rounded-2xl text-xl font-bold shadow-lg">−</button>
         `;
-        breaksDiv.appendChild(newBreak);
-    }
+            breaksDiv.appendChild(newBreak);
+        }
 
-    function removeBreak(button) {
-        button.parentElement.remove();
-    }
+        function removeBreak(button) {
+            button.parentElement.remove();
+            updateDisplay(false);
+        }
 
-    function updateDisplay() {
-        const loginTime = document.getElementById('loginTime').value;
-        const shiftHours = parseInt(document.getElementById('shiftHours').value);
-        const breaks = Array.from(document.querySelectorAll('.breakInput')).map(input => parseInt(input.value) || 0);
-        const totalBreakMinutes = breaks.reduce((a, b) => a + b, 0);
+        function updateDisplay(showAnimation = true) {
+            const loginTime = document.getElementById('loginTime').value;
+            const shiftHoursInput = document.getElementById('shiftHours').value;
+            const shiftHours = parseFloat(shiftHoursInput) || 0;
+            const breaks = Array.from(document.querySelectorAll('.breakInput')).map(input => parseInt(input.value) || 0);
+            const totalBreakMinutes = breaks.reduce((a, b) => a + b, 0);
 
-        const [hours, minutes] = loginTime.split(':').map(Number);
-        let endMinutes = minutes + (shiftHours * 60) - totalBreakMinutes;
-        let endHours = hours + Math.floor(endMinutes / 60);
-        endMinutes = endMinutes % 60;
-        endHours = endHours % 24;
+            if (!loginTime) return;
 
-        const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
-        document.getElementById('display').textContent = `Logout Time: ${endTimeStr}`;
+            const [loginH, loginM] = loginTime.split(':').map(Number);
+            const totalShiftMinutes = (shiftHours * 60) + totalBreakMinutes;
 
-        const now = new Date();
-        const endDate = new Date(now);
-        endDate.setHours(endHours, endMinutes, 0);
-        if (endDate < now) endDate.setDate(endDate.getDate() + 1);
+            // Calculate Logout Time
+            let endTotalMinutes = (loginH * 60) + loginM + totalShiftMinutes;
+            let endH = Math.floor(endTotalMinutes / 60) % 24;
+            let endM = endTotalMinutes % 60;
 
-        const diff = endDate - now;
-        const diffHours = Math.floor(diff / 3600000);
-        const diffMinutes = Math.floor((diff % 3600000) / 60000);
-        document.getElementById('timeLeft').textContent = `Time Left: ${diffHours}h ${diffMinutes}m`;
-    }
-</script>
+            const endTimeStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+            const displayEl = document.getElementById('display');
+            displayEl.textContent = `Logout Time: ${endTimeStr}`;
+
+            if (showAnimation) {
+                displayEl.classList.add('scale-110');
+                setTimeout(() => displayEl.classList.remove('scale-110'), 200);
+            }
+
+            // Calculate Time Left
+            const now = new Date();
+
+            let startDate = new Date(now);
+            startDate.setHours(loginH, loginM, 0, 0);
+
+            if (startDate - now > 12 * 60 * 60 * 1000) {
+                startDate.setDate(startDate.getDate() - 1);
+            }
+
+            const logoutDate = new Date(startDate.getTime() + totalShiftMinutes * 60000);
+            const diff = logoutDate - now;
+
+            const timeLeftEl = document.getElementById('timeLeft');
+            if (diff <= 0) {
+                const absDiff = Math.abs(diff);
+                const otH = Math.floor(absDiff / 3600000);
+                const otM = Math.floor((absDiff % 3600000) / 60000);
+                const otS = Math.floor((absDiff % 60000) / 1000);
+
+                timeLeftEl.textContent = `Shift Ended! (Overtime: ${otH}h ${otM}m ${otS}s)`;
+                timeLeftEl.classList.add('bg-rose-500/20', 'text-rose-300', 'border-rose-500/30');
+                timeLeftEl.classList.remove('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-500/30');
+            } else {
+                const diffHours = Math.floor(diff / 3600000);
+                const diffMinutes = Math.floor((diff % 3600000) / 60000);
+                const diffSeconds = Math.floor((diff % 60000) / 1000);
+
+                timeLeftEl.textContent = `Time Left: ${diffHours}h ${diffMinutes}m ${diffSeconds}s`;
+                timeLeftEl.classList.add('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-500/30');
+                timeLeftEl.classList.remove('bg-rose-500/20', 'text-rose-300', 'border-rose-500/30');
+            }
+            timeLeftEl.classList.remove('hidden');
+        }
+    </script>
 </body>
+
 </html>
