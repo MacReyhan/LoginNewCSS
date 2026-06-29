@@ -8,6 +8,7 @@ dist/
 # IDE / Editors
 .vs/
 .idea/
+.vscode/
 *.suo
 *.user
 *.sln.docstates
