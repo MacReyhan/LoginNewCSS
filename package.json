@@ -18,6 +18,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "esbuild": "^0.28.1",
+    "typescript": "^6.0.3",
     "wrangler": "^4.61.0"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.4"
   }
 }

@@ -11,9 +11,8 @@
     <link rel="icon" href="ic_launcher-playstore.png" type="image/png">
     <meta name="theme-color" content="#0ea5e9">
 
-    <!-- CSS / Tailwind & Libraries -->
+    <!-- CSS / Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
@@ -81,6 +80,8 @@
             outline: none;
         }
     </style>
+    <!-- Compiled TS Code Bundled with canvas-confetti -->
+    <script src="index.js" defer></script>
 </head>
 
 <body class="text-white p-4">
@@ -91,7 +92,7 @@
             <h1 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-yellow-200 to-yellow-500 bg-clip-text text-transparent">
                 Shift Timer
             </h1>
-            <button id="notifyBtn" onclick="toggleNotifications()" class="text-white/40 hover:text-white transition duration-200 focus:outline-none p-2.5 rounded-xl bg-white/5 hover:bg-white/10" title="Toggle Shift Complete Alerts">
+            <button id="notifyBtn" class="text-white/40 hover:text-white transition duration-200 focus:outline-none p-2.5 rounded-xl bg-white/5 hover:bg-white/10" title="Toggle Shift Complete Alerts">
                 <!-- Disabled Bell Icon by default -->
                 <svg xmlns="http://www.w3.org/2000/svg" id="bellIcon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -103,14 +104,14 @@
         <!-- Login -->
         <div class="mb-6">
             <label class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-2 ml-1">Login Time</label>
-            <input type="time" id="loginTime" value="22:42" oninput="saveState(); updateDisplay(false)"
+            <input type="time" id="loginTime" value="22:42"
                 class="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner">
         </div>
 
         <!-- Shift -->
         <div class="mb-6">
             <label class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-2 ml-1">Shift Hours</label>
-            <input type="number" id="shiftHours" value="7" min="1" max="12" step="0.5" oninput="saveState(); updateDisplay(false)"
+            <input type="number" id="shiftHours" value="7" min="1" max="12" step="0.5"
                 class="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner">
         </div>
 
@@ -118,13 +119,13 @@
         <div class="mb-6">
             <label class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-2 ml-1">Quick Add Breaks</label>
             <div class="flex gap-2">
-                <button onclick="addPresetBreak(15)" class="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 text-xs font-semibold transition duration-200 text-teal-300">
+                <button class="preset-btn flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 text-xs font-semibold transition duration-200 text-teal-300" data-minutes="15">
                     +15m
                 </button>
-                <button onclick="addPresetBreak(30)" class="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 text-xs font-semibold transition duration-200 text-emerald-300">
+                <button class="preset-btn flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 text-xs font-semibold transition duration-200 text-emerald-300" data-minutes="30">
                     +30m (Lunch)
                 </button>
-                <button onclick="addPresetBreak(45)" class="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 text-xs font-semibold transition duration-200 text-yellow-300">
+                <button class="preset-btn flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 text-xs font-semibold transition duration-200 text-yellow-300" data-minutes="45">
                     +45m
                 </button>
             </div>
@@ -134,16 +135,15 @@
         <div class="mb-4" id="breaks">
             <label class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-2 ml-1">Breaks (minutes)</label>
             <div class="flex gap-3 mb-3">
-                <input type="number" oninput="saveState(); updateDisplay(false)"
+                <input type="number"
                     class="breakInput flex-1 p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner"
                     placeholder="Min">
-                <button onclick="removeBreak(this)"
-                    class="btn-remove w-14 flex items-center justify-center rounded-2xl text-xl font-bold shadow-lg">−</button>
+                <button class="btn-remove w-14 flex items-center justify-center rounded-2xl text-xl font-bold shadow-lg">−</button>
             </div>
         </div>
 
         <!-- Actions -->
-        <button onclick="addBreak()"
+        <button id="addBreakBtn"
             class="btn-add w-full mb-6 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd"
@@ -153,7 +153,7 @@
             Add Break
         </button>
 
-        <button onclick="updateDisplay(true); saveState()"
+        <button id="calculateBtn"
             class="btn-calculate w-full text-black h-16 rounded-2xl font-extrabold text-lg uppercase tracking-wider mb-8 flex items-center justify-center">
             Calculate
         </button>
@@ -178,313 +178,6 @@
         </div>
     </div>
 
-    <script>
-        // State management
-        let alertTriggered = false;
-        let notificationsEnabled = false;
-        let showResults = false;
-        let audioCtx = null;
-
-        // Update current time every second
-        function updateClock() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-            const currentTimeEl = document.getElementById('currentTime');
-            if (currentTimeEl) {
-                currentTimeEl.textContent = `Current Time: ${timeStr}`;
-            }
-
-            // Auto-refresh calculation if it has been run at least once
-            const timeLeftEl = document.getElementById('timeLeft');
-            if (timeLeftEl && !timeLeftEl.classList.contains('hidden')) {
-                updateDisplay(false);
-            }
-        }
-        setInterval(updateClock, 1000);
-
-        // Run immediately on load
-        window.addEventListener('load', () => {
-            updateClock();
-            loadState();
-            // Restore notification choice from local storage
-            const savedNotif = localStorage.getItem('shiftTimerNotifications');
-            if (savedNotif === 'true' && Notification.permission === 'granted') {
-                notificationsEnabled = true;
-                updateBellIcon(true);
-            }
-        });
-
-        // Add break
-        function addBreak(value = "") {
-            const breaksDiv = document.getElementById('breaks');
-            const newBreak = document.createElement('div');
-            newBreak.className = 'flex gap-3 mb-3';
-            newBreak.innerHTML = `
-                <input type="number" class="breakInput flex-1 p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner" placeholder="Min" value="${value}" oninput="saveState(); updateDisplay(false)">
-                <button onclick="removeBreak(this)" class="btn-remove w-14 flex items-center justify-center rounded-2xl text-xl font-bold shadow-lg">−</button>
-            `;
-            breaksDiv.appendChild(newBreak);
-            saveState();
-            updateDisplay(false);
-        }
-
-        // Add break preset
-        function addPresetBreak(min) {
-            addBreak(min);
-        }
-
-        // Remove break
-        function removeBreak(button) {
-            button.parentElement.remove();
-            saveState();
-            updateDisplay(false);
-        }
-
-        // Save State
-        function saveState() {
-            const loginTime = document.getElementById('loginTime').value;
-            const shiftHours = document.getElementById('shiftHours').value;
-            const breaks = Array.from(document.querySelectorAll('.breakInput')).map(input => input.value);
-            
-            const state = { loginTime, shiftHours, breaks, showResults };
-            localStorage.setItem('shiftTimerState', JSON.stringify(state));
-        }
-
-        // Load State
-        function loadState() {
-            const stateStr = localStorage.getItem('shiftTimerState');
-            if (!stateStr) return;
-            try {
-                const state = JSON.parse(stateStr);
-                if (state.loginTime) document.getElementById('loginTime').value = state.loginTime;
-                if (state.shiftHours) document.getElementById('shiftHours').value = state.shiftHours;
-                
-                if (state.breaks && state.breaks.length > 0) {
-                    const breaksContainer = document.getElementById('breaks');
-                    breaksContainer.querySelectorAll('.flex').forEach(el => el.remove());
-                    
-                    state.breaks.forEach((val) => {
-                        const newBreak = document.createElement('div');
-                        newBreak.className = 'flex gap-3 mb-3';
-                        newBreak.innerHTML = `
-                            <input type="number" class="breakInput flex-1 p-4 rounded-2xl bg-white/10 border border-white/20 text-lg font-medium shadow-inner" placeholder="Min" value="${val}" oninput="saveState(); updateDisplay(false)">
-                            <button onclick="removeBreak(this)" class="btn-remove w-14 flex items-center justify-center rounded-2xl text-xl font-bold shadow-lg">−</button>
-                        `;
-                        breaksContainer.appendChild(newBreak);
-                    });
-                }
-                showResults = state.showResults || false;
-                if (showResults) {
-                    updateDisplay(false);
-                }
-            } catch (e) {
-                console.error("Error loading stored state:", e);
-            }
-        }
-
-        // Play chime sound using Web Audio API
-        function playChime() {
-            try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-                
-                const now = audioCtx.currentTime;
-                
-                const osc1 = audioCtx.createOscillator();
-                const osc2 = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(523.25, now); // C5
-                osc1.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-                
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(659.25, now + 0.05); // E5
-                osc2.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25); // C6
-                
-                gainNode.gain.setValueAtTime(0, now);
-                gainNode.gain.linearRampToValueAtTime(0.3, now + 0.02);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-                
-                osc1.connect(gainNode);
-                osc2.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                osc1.start(now);
-                osc1.stop(now + 0.8);
-                
-                osc2.start(now + 0.05);
-                osc2.stop(now + 0.85);
-            } catch (e) {
-                console.error("Failed to play audio chime alert:", e);
-            }
-        }
-
-        // Toggle notifications
-        function toggleNotifications() {
-            if (Notification.permission === 'default') {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        notificationsEnabled = true;
-                        updateBellIcon(true);
-                        localStorage.setItem('shiftTimerNotifications', 'true');
-                        new Notification("Notifications Enabled!", {
-                            body: "Shift Timer will now notify you when your shift ends.",
-                            icon: "ic_launcher-playstore.png"
-                        });
-                    } else {
-                        notificationsEnabled = false;
-                        updateBellIcon(false);
-                        localStorage.setItem('shiftTimerNotifications', 'false');
-                    }
-                });
-            } else if (Notification.permission === 'granted') {
-                notificationsEnabled = !notificationsEnabled;
-                updateBellIcon(notificationsEnabled);
-                localStorage.setItem('shiftTimerNotifications', notificationsEnabled ? 'true' : 'false');
-            } else {
-                alert("Notification permission is blocked. Please enable notifications in your browser settings.");
-                updateBellIcon(false);
-                localStorage.setItem('shiftTimerNotifications', 'false');
-            }
-        }
-
-        function updateBellIcon(enabled) {
-            const bellIcon = document.getElementById('bellIcon');
-            const notifyBtn = document.getElementById('notifyBtn');
-            if (enabled) {
-                notifyBtn.classList.remove('text-white/40');
-                notifyBtn.classList.add('text-yellow-400', 'bg-yellow-400/10');
-                bellIcon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                `;
-            } else {
-                notifyBtn.classList.add('text-white/40');
-                notifyBtn.classList.remove('text-yellow-400', 'bg-yellow-400/10');
-                bellIcon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                `;
-            }
-        }
-
-        // Calculations & UI display update
-        function updateDisplay(showAnimation = true) {
-            const loginTime = document.getElementById('loginTime').value;
-            const shiftHoursInput = document.getElementById('shiftHours').value;
-            const shiftHours = parseFloat(shiftHoursInput) || 0;
-            const breaks = Array.from(document.querySelectorAll('.breakInput')).map(input => parseInt(input.value) || 0);
-            const totalBreakMinutes = breaks.reduce((a, b) => a + b, 0);
-
-            if (!loginTime) return;
-            if (showAnimation) {
-                showResults = true;
-            }
-
-            const [loginH, loginM] = loginTime.split(':').map(Number);
-            const totalShiftMinutes = (shiftHours * 60) + totalBreakMinutes;
-
-            // Calculate Logout Time
-            let endTotalMinutes = (loginH * 60) + loginM + totalShiftMinutes;
-            let endH = Math.floor(endTotalMinutes / 60) % 24;
-            let endM = endTotalMinutes % 60;
-
-            const endTimeStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
-            const displayEl = document.getElementById('display');
-            displayEl.textContent = `Logout Time: ${endTimeStr}`;
-
-            if (showAnimation) {
-                displayEl.classList.add('scale-110');
-                setTimeout(() => displayEl.classList.remove('scale-110'), 200);
-            }
-
-            // Date setup
-            const now = new Date();
-            let startDate = new Date(now);
-            startDate.setHours(loginH, loginM, 0, 0);
-
-            // Handle shift crossing midnight
-            if (startDate - now > 12 * 60 * 60 * 1000) {
-                startDate.setDate(startDate.getDate() - 1);
-            }
-
-            const logoutDate = new Date(startDate.getTime() + totalShiftMinutes * 60000);
-            const diff = logoutDate - now;
-
-            // Update Progress Bar
-            const totalDuration = totalShiftMinutes * 60000;
-            const elapsed = now - startDate;
-            let percent = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
-
-            const timelineContainer = document.getElementById('timelineContainer');
-            const timelineBar = document.getElementById('timelineBar');
-            const timelinePercent = document.getElementById('timelinePercent');
-            const timelineStart = document.getElementById('timelineStart');
-            const timelineEnd = document.getElementById('timelineEnd');
-
-            timelineContainer.classList.remove('hidden');
-            timelineStart.textContent = `Login: ${loginTime}`;
-            timelineEnd.textContent = `Logout: ${endTimeStr}`;
-
-            if (percent >= 100) {
-                timelineBar.style.width = '100%';
-                timelineBar.className = 'h-full rounded-full bg-gradient-to-r from-rose-500 to-red-600 transition-all duration-1000';
-                timelinePercent.textContent = `100% (Completed)`;
-            } else if (percent >= 90) {
-                timelineBar.style.width = `${percent}%`;
-                timelineBar.className = 'h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-1000';
-                timelinePercent.textContent = `${Math.floor(percent)}%`;
-            } else {
-                timelineBar.style.width = `${percent}%`;
-                timelineBar.className = 'h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000';
-                timelinePercent.textContent = `${Math.floor(percent)}%`;
-            }
-
-            // Update Time Left / Overtime outputs
-            const timeLeftEl = document.getElementById('timeLeft');
-            if (diff <= 0) {
-                const absDiff = Math.abs(diff);
-                const otH = Math.floor(absDiff / 3600000);
-                const otM = Math.floor((absDiff % 3600000) / 60000);
-                const otS = Math.floor((absDiff % 60000) / 1000);
-
-                timeLeftEl.textContent = `Shift Ended! (Overtime: ${otH}h ${otM}m ${otS}s)`;
-                timeLeftEl.classList.add('bg-rose-500/20', 'text-rose-300', 'border-rose-500/30');
-                timeLeftEl.classList.remove('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-500/30');
-
-                // Trigger Alarm
-                if (!alertTriggered) {
-                    playChime();
-                    confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.6 }
-                    });
-                    if (notificationsEnabled) {
-                        new Notification("Shift Complete! 🎉", {
-                            body: `Your shift ended at ${endTimeStr}. It's time to log out!`,
-                            icon: "ic_launcher-playstore.png"
-                        });
-                    }
-                    alertTriggered = true;
-                }
-            } else {
-                const diffHours = Math.floor(diff / 3600000);
-                const diffMinutes = Math.floor((diff % 3600000) / 60000);
-                const diffSeconds = Math.floor((diff % 60000) / 1000);
-
-                timeLeftEl.textContent = `Time Left: ${diffHours}h ${diffMinutes}m ${diffSeconds}s`;
-                timeLeftEl.classList.add('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-500/30');
-                timeLeftEl.classList.remove('bg-rose-500/20', 'text-rose-300', 'border-rose-500/30');
-                
-                alertTriggered = false; // Reset alert trigger if time added
-            }
-            timeLeftEl.classList.remove('hidden');
-        }
-    </script>
 </body>
 
 </html>
