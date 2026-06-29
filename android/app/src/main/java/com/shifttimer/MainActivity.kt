@@ -1,7 +1,11 @@
 package com.shifttimer
 
 import android.app.TimePickerDialog
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
@@ -47,13 +51,44 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Save inputs to SharedPreferences
+fun saveState(context: Context, login: LocalTime, hours: String, brks: List<Int>, show: Boolean) {
+    val prefs = context.getSharedPreferences("ShiftTimerPrefs", Context.MODE_PRIVATE)
+    prefs.edit()
+        .putString("loginTime", login.toString())
+        .putString("shiftHours", hours)
+        .putString("breaks", brks.joinToString(","))
+        .putBoolean("showResults", show)
+        .apply()
+}
+
 @Composable
 fun ShiftTimerApp() {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("ShiftTimerPrefs", Context.MODE_PRIVATE) }
+    
+    // Load initial states from saved preferences
+    val initialLoginTime = remember {
+        val saved = prefs.getString("loginTime", "22:42") ?: "22:42"
+        try {
+            LocalTime.parse(saved)
+        } catch(e: Exception) {
+            LocalTime.of(22, 42)
+        }
+    }
+    val initialShiftHours = remember { prefs.getString("shiftHours", "7") ?: "7" }
+    val initialBreaks = remember {
+        val saved = prefs.getString("breaks", "") ?: ""
+        if (saved.isEmpty()) listOf<Int>() else saved.split(",").mapNotNull { it.toIntOrNull() }
+    }
+    val initialShowResults = remember { prefs.getBoolean("showResults", false) }
+
     var currentTime by remember { mutableStateOf(LocalTime.now()) }
-    var loginTime by remember { mutableStateOf(LocalTime.of(22, 42)) }
-    var shiftHours by remember { mutableStateOf("7") }
-    val breaks = remember { mutableStateListOf<Int>() }
-    var showResults by remember { mutableStateOf(false) }
+    var loginTime by remember { mutableStateOf(initialLoginTime) }
+    var shiftHours by remember { mutableStateOf(initialShiftHours) }
+    val breaks = remember { mutableStateListOf<Int>().apply { addAll(initialBreaks) } }
+    var showResults by remember { mutableStateOf(initialShowResults) }
+    var alertTriggered by remember { mutableStateOf(false) }
 
     // Update clock every second
     LaunchedEffect(Unit) {
@@ -113,13 +148,13 @@ fun ShiftTimerApp() {
 
                 // Login Time Picker
                 item {
-                    val context = LocalContext.current
                     Label("Login Time")
                     Button(
                         onClick = {
                             TimePickerDialog(context, { _, h, m ->
                                 loginTime = LocalTime.of(h, m)
                                 showResults = true
+                                saveState(context, loginTime, shiftHours, breaks.toList(), true)
                             }, loginTime.hour, loginTime.minute, true).show()
                         },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -135,7 +170,11 @@ fun ShiftTimerApp() {
                     Label("Shift Hours")
                     OutlinedTextField(
                         value = shiftHours,
-                        onValueChange = { shiftHours = it; showResults = true },
+                        onValueChange = {
+                            shiftHours = it
+                            showResults = true
+                            saveState(context, loginTime, shiftHours, breaks.toList(), true)
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = TextFieldDefaults.colors(
@@ -146,6 +185,38 @@ fun ShiftTimerApp() {
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                     )
+                }
+
+                // Quick Add Break Presets
+                item {
+                    Label("Quick Add Breaks")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(15 to "+15m", 30 to "+30m (Lunch)", 45 to "+45m").forEach { (min, label) ->
+                            Button(
+                                onClick = {
+                                    breaks.add(min)
+                                    showResults = true
+                                    saveState(context, loginTime, shiftHours, breaks.toList(), true)
+                                },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.05f)),
+                                contentPadding = PaddingValues()
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(label, fontSize = 11.sp, color = Color(0xFF6EE7B7), fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Breaks List
@@ -159,7 +230,12 @@ fun ShiftTimerApp() {
                     ) {
                         OutlinedTextField(
                             value = if (minutes == 0) "" else minutes.toString(),
-                            onValueChange = { val v = it.toIntOrNull() ?: 0; breaks[index] = v; showResults = true },
+                            onValueChange = {
+                                val v = it.toIntOrNull() ?: 0
+                                breaks[index] = v
+                                showResults = true
+                                saveState(context, loginTime, shiftHours, breaks.toList(), true)
+                            },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(16.dp),
                             placeholder = { Text("Min", color = Color.White.copy(0.3f)) },
@@ -172,7 +248,10 @@ fun ShiftTimerApp() {
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
                         IconButton(
-                            onClick = { breaks.removeAt(index) },
+                            onClick = {
+                                breaks.removeAt(index)
+                                saveState(context, loginTime, shiftHours, breaks.toList(), showResults)
+                            },
                             modifier = Modifier
                                 .size(56.dp)
                                 .background(redGradient, RoundedCornerShape(16.dp))
@@ -184,7 +263,10 @@ fun ShiftTimerApp() {
 
                 item {
                     Button(
-                        onClick = { breaks.add(0) },
+                        onClick = {
+                            breaks.add(0)
+                            saveState(context, loginTime, shiftHours, breaks.toList(), showResults)
+                        },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -205,7 +287,10 @@ fun ShiftTimerApp() {
 
                 item {
                     Button(
-                        onClick = { showResults = true },
+                        onClick = {
+                            showResults = true
+                            saveState(context, loginTime, shiftHours, breaks.toList(), true)
+                        },
                         modifier = Modifier.fillMaxWidth().height(64.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -240,15 +325,62 @@ fun ShiftTimerApp() {
                         val logoutTime = startDateTime.plusMinutes(totalMinutes)
                         val diff = java.time.Duration.between(now, logoutTime)
                         
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 text = "Logout Time: ${logoutTime.format(DateTimeFormatter.ofPattern("HH:mm"))}",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
-                                modifier = Modifier.padding(bottom = 8.dp)
+                                modifier = Modifier.padding(bottom = 4.dp)
                             )
                             
+                            // Visual Timeline Progress
+                            val totalDuration = totalMinutes * 60000L
+                            val elapsed = ChronoUnit.MILLIS.between(startDateTime, java.time.LocalDateTime.now())
+                            val rawPercent = if (totalDuration > 0) (elapsed.toFloat() / totalDuration) * 100f else 0f
+                            val percent = rawPercent.coerceIn(0f, 100f)
+                            
+                            val barGradient = when {
+                                percent >= 100f -> Brush.linearGradient(listOf(Color(0xFFEF4444), Color(0xFFDC2626)))
+                                percent >= 90f -> Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFF59E0B)))
+                                else -> Brush.linearGradient(listOf(Color(0xFF10B981), Color(0xFF059669)))
+                            }
+                            
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Label("Shift Progress")
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(16.dp)
+                                        .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                                        .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                                        .padding(2.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth(percent / 100f)
+                                            .background(barGradient, RoundedCornerShape(6.dp))
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Login: ${loginTime.format(DateTimeFormatter.ofPattern("HH:mm"))}", color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+                                    Text(
+                                        text = if (percent >= 100f) "100% (Completed)" else "${percent.toInt()}%",
+                                        color = if (percent >= 100f) Color(0xFFFCA5A5) else Color(0xFFFDE68A),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text("Logout: ${logoutTime.format(DateTimeFormatter.ofPattern("HH:mm"))}", color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+                                }
+                            }
+
                             val isOvertime = diff.isNegative
                             val absDiff = diff.abs()
                             val h = absDiff.toHours()
@@ -269,6 +401,24 @@ fun ShiftTimerApp() {
                                     modifier = Modifier.padding(16.dp),
                                     textAlign = TextAlign.Center
                                 )
+                            }
+                            
+                            // Vibration trigger logic when overtime begins
+                            if (isOvertime) {
+                                if (!alertTriggered) {
+                                    val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator?
+                                    if (vibrator != null) {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+                                        } else {
+                                            @Suppress("DEPRECATION")
+                                            vibrator.vibrate(500)
+                                        }
+                                    }
+                                    alertTriggered = true
+                                }
+                            } else {
+                                alertTriggered = false
                             }
                         }
                     }
