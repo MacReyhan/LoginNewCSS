@@ -4,10 +4,10 @@
   "description": "Shift Timer application built with Cloudflare Workers",
   "main": "src/workers.js",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "build": "echo 'Building...'",
-    "preview": "wrangler preview"
+    "dev": "wrangler pages dev dist",
+    "deploy": "wrangler pages deploy dist",
+    "build": "node build.js",
+    "preview": "wrangler pages dev dist"
   },
   "keywords": [
     "shift",

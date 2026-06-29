@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Production Build
+dist/
+.wrangler/
+
+# IDE / Editors
+.vs/
+.idea/
+*.suo
+*.user
+*.sln.docstates
+
+# OS Files
+.DS_Store
+Thumbs.db
